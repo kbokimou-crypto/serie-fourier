@@ -5,6 +5,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -46,3 +49,15 @@ jobs:
           path: |
             dist/SerieFourier.exe
             Output/SerieFourier_Setup.exe
+      - name: Publier la version (lien de téléchargement direct)
+        if: github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete derniere-version --cleanup-tag --yes 2>$null
+          $global:LASTEXITCODE = 0
+          gh release create derniere-version Output/SerieFourier_Setup.exe dist/SerieFourier.exe `
+            --title "Série de Fourier (dernière version)" `
+            --notes "Téléchargez SerieFourier_Setup.exe pour installer l'application (raccourcis Bureau et menu Démarrer), ou SerieFourier.exe pour la lancer sans installation." `
+            --target $env:GITHUB_SHA --latest
