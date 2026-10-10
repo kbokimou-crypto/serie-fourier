@@ -16,7 +16,7 @@ jobs:
       - name: Installer les dépendances
         run: python -m pip install -r requirements.txt
       - name: Fabriquer l'exe
-        run: pyinstaller --noconfirm --onefile --windowed --name SerieFourier --hidden-import PIL._tkinter_finder fourier_app.py
+        run: pyinstaller --noconfirm --onefile --windowed --name SerieFourier --hidden-import PIL._tkinter_finder --add-data "exemple_suite.csv;." fourier_app.py
       - name: Fabriquer l'installateur
         shell: pwsh
         run: |
@@ -24,6 +24,22 @@ jobs:
           $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
           if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
           & $iscc installer.iss
+      - name: Tester l'exe (démarrage + calcul sur l'exemple)
+        shell: pwsh
+        run: |
+          $p = Start-Process dist\SerieFourier.exe -ArgumentList '--selftest' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content "$env:LOCALAPPDATA\SerieFourier\erreur.txt" -ErrorAction SilentlyContinue; exit 1 }
+      - name: Tester l'installateur (installation + raccourcis)
+        shell: pwsh
+        run: |
+          $p = Start-Process Output\SerieFourier_Setup.exe -ArgumentList '/VERYSILENT','/CURRENTUSER','/SUPPRESSMSGBOXES','/NORESTART','/TASKS=desktopicon' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { exit 1 }
+          Get-ChildItem "$env:APPDATA\Microsoft\Windows\Start Menu\Programs" -Recurse -Filter *.lnk | Where-Object FullName -match 'Fourier' | ForEach-Object { $_.FullName }
+          Get-ChildItem ([Environment]::GetFolderPath('Desktop')) -Filter *.lnk | ForEach-Object { $_.FullName }
+          $exe = Get-ChildItem "$env:LOCALAPPDATA\Programs\SerieFourier\SerieFourier.exe"
+          $exe.FullName
+          $r = Start-Process $exe.FullName -ArgumentList '--selftest' -Wait -PassThru
+          if ($r.ExitCode -ne 0) { exit 1 }
       - uses: actions/upload-artifact@v4
         with:
           name: SerieFourier-windows

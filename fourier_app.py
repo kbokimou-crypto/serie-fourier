@@ -457,11 +457,56 @@ class App(tk.Tk):
         self.canvas.draw_idle()
 
 
-def main():
+def _report_crash(exc_text):
+    """Mode fenêtré : sans console, une erreur serait invisible. On l'écrit
+    dans un fichier et on l'affiche."""
+    log_dir = os.path.join(os.environ.get("LOCALAPPDATA") or os.path.expanduser("~"), "SerieFourier")
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        log = os.path.join(log_dir, "erreur.txt")
+        with open(log, "w", encoding="utf-8") as fh:
+            fh.write(exc_text)
+    except OSError:
+        log = "(impossible d'écrire le fichier d'erreur)"
+    msg = f"L'application a rencontré une erreur au démarrage.\n\nDétails enregistrés dans :\n{log}\n\n{exc_text[-800:]}"
+    try:
+        import ctypes
+
+        ctypes.windll.user32.MessageBoxW(0, msg, APP_TITLE, 0x10)
+    except Exception:  # noqa: BLE001  (hors Windows)
+        print(msg, file=sys.stderr)
+
+
+def self_test():
+    """--selftest : ouvre la fenêtre, calcule sur l'exemple puis quitte (code 0 si tout va bien)."""
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    sample = next(
+        (p for p in (os.path.join(base, "exemple_suite.csv"), "exemple_suite.csv") if os.path.isfile(p)),
+        None,
+    )
     app = App()
-    if len(sys.argv) > 1 and os.path.isfile(sys.argv[1]):
-        app.after(100, lambda: app.load(sys.argv[1]))
-    app.mainloop()
+    if sample:
+        app.load(sample)
+        assert app.model is not None and app.model.terms, "aucun terme de Fourier trouvé"
+    app.update()
+    app.destroy()
+
+
+def main():
+    try:
+        if "--selftest" in sys.argv:
+            self_test()
+            return
+        app = App()
+        args = [a for a in sys.argv[1:] if not a.startswith("--")]
+        if args and os.path.isfile(args[0]):
+            app.after(100, lambda: app.load(args[0]))
+        app.mainloop()
+    except Exception:  # noqa: BLE001
+        import traceback
+
+        _report_crash(traceback.format_exc())
+        sys.exit(1)
 
 
 if __name__ == "__main__":

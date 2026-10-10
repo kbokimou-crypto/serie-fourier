@@ -10,6 +10,8 @@ Compression=lzma2
 SolidCompression=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
+UninstallDisplayIcon={app}\SerieFourier.exe
+UninstallDisplayName=Série de Fourier
 
 [Languages]
 Name: "french"; MessagesFile: "compiler:Languages\French.isl"

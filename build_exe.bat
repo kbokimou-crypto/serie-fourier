@@ -12,7 +12,7 @@ python -m venv .venv || goto :err
 call .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt || goto :err
-pyinstaller --noconfirm --onefile --windowed --name SerieFourier --hidden-import PIL._tkinter_finder fourier_app.py || goto :err
+pyinstaller --noconfirm --onefile --windowed --name SerieFourier --hidden-import PIL._tkinter_finder --add-data "exemple_suite.csv;." fourier_app.py || goto :err
 echo.
 echo  [1/2] Programme termine : dist\SerieFourier.exe
 echo.
