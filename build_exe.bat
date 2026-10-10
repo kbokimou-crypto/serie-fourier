@@ -34,7 +34,11 @@ goto :fin
 :installer
 "%ISCC%" installer.iss || goto :err
 echo.
-echo  [2/2] Installateur termine : Output\SerieFourier_Setup.exe
+echo  [2/2] Installateur FABRIQUE (pas encore installe) : Output\SerieFourier_Setup.exe
+echo.
+echo  ==^> Pour INSTALLER l'application, double-cliquez sur SerieFourier_Setup.exe
+echo      dans le dossier Output qui va s'ouvrir.
+start "" explorer "%~dp0Output"
 
 :fin
 echo.
